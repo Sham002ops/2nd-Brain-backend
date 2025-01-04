@@ -7,27 +7,23 @@ exports.userMiddleware = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("./config");
 const userMiddleware = (req, res, next) => {
-    var _a;
-    const header = (_a = req.header("Authorization")) === null || _a === void 0 ? void 0 : _a.replace("Bearer ", "");
-    jsonwebtoken_1.default.verify(header, config_1.JWT_PASSWORD, (err, decoded) => {
-        if (err) {
-            if (err.name === "TokenExpiredError") {
-                return res.status(401).json({
-                    message: "Token Expired"
-                });
-            }
-            return res.status(403).json({
-                message: "Invalid token"
-            });
-        }
+    const header = req.headers["authorization"];
+    const decoded = jsonwebtoken_1.default.verify(header, config_1.JWT_PASSWORD);
+    if (decoded) {
         if (typeof decoded === "string") {
-            return res.status(403).json({
-                message: "Invalid token"
+            res.status(403).json({
+                message: "You are logged in"
             });
+            return;
         }
         // @ts-ignore
         req.userId = decoded.id;
         next();
-    });
+    }
+    else {
+        res.status(403).json({
+            message: "You are not logged in"
+        });
+    }
 };
 exports.userMiddleware = userMiddleware;
