@@ -20,12 +20,12 @@ import { error, log } from "console";
 const app = express();
 app.use(express.json());
 app.use(
-    cors()
+    cors({
+        origin: 'https://2nd-brain-vault.vercel.app', 
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true, 
+    })
   );
-app.use((err: Error, req: Request, res: Response, next: Function) => {
-    console.error(err.stack);
-    res.status(500).json({ message: "An internal server error occurred" });
-});
 
 app.post("/api/v1/", async ( req: Request, res: Response) => { 
     console.log(`Server is running on port ${process.env.PORT}`);
