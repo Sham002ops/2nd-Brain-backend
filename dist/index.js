@@ -25,11 +25,7 @@ const RandomGen_1 = require("./models/RandomGen");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-app.use((0, cors_1.default)({
-    origin: 'https://2ndbrainvault.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
-}));
+app.use((0, cors_1.default)());
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: "An internal server error occurred" });

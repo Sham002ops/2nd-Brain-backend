@@ -20,11 +20,7 @@ import { error, log } from "console";
 const app = express();
 app.use(express.json());
 app.use(
-    cors({
-      origin: 'https://2ndbrainvault.netlify.app', 
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      credentials: true, 
-    })
+    cors()
   );
 app.use((err: Error, req: Request, res: Response, next: Function) => {
     console.error(err.stack);
