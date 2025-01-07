@@ -24,12 +24,12 @@ const authMiddleware_1 = require("./authMiddleware");
 const RandomGen_1 = require("./models/RandomGen");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)({
+// origin: 'https://2nd-brain-vault.vercel.app', 
+// methods: ['GET', 'POST', 'PUT', 'DELETE'],
+// credentials: true, 
+}));
 app.use(express_1.default.json());
-app.use((0, cors_1.default)());
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: "An internal server error occurred" });
-});
 app.post("/api/v1/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server is running on port ${process.env.PORT}`);
     res.json({
@@ -82,47 +82,39 @@ app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const requiredBody = zod_1.default.object({
-            username: zod_1.default.string()
-                .min(3, { message: "Username must be at least 3 characters long" })
-                .max(30, { message: "Username must not exceed 30 characters" }),
+        const { username, password } = req.body;
+        const validationResult = zod_1.default.object({
+            username: zod_1.default.string().min(3).max(30),
             password: zod_1.default.string()
-                .regex(/[A-Z]/, { message: "Password must be contain at least one Capital letter" })
-                .regex(/[a-z]/, { message: "Password must be contain at least one small letter" })
-                .regex(/[0-9]/, { message: "Password must be contain at least one number" })
-                .regex(/[@#$%^&*(){}<>?:"]/, { message: "Password must be contain at least one special character" })
-        });
-        const passDataWithSuccess = requiredBody.safeParse(req.body);
-        if (!passDataWithSuccess.success) {
-            res.json({
+                .regex(/[A-Z]/)
+                .regex(/[a-z]/)
+                .regex(/[0-9]/)
+                .regex(/[@#$%^&*(){}<>?:"]/),
+        })
+            .safeParse(req.body);
+        if (!validationResult.success) {
+            res.status(400).json({
                 message: "incorect format",
-                error: passDataWithSuccess.error
+                error: validationResult.error
             });
-            return;
         }
-        const { password, username } = req.body;
-        const userExists = yield db_1.UserModel.findOne({
-            username: username
-        });
+        const userExists = yield db_1.UserModel.findOne({ username: username }).select('password');
         if (!userExists) {
             res.status(403).json({ message: "Incorrect credentials" });
             return;
         }
         const passwordMatch = yield bcrypt_1.default.compare(password, userExists === null || userExists === void 0 ? void 0 : userExists.password);
-        if (passwordMatch) {
-            const token = jsonwebtoken_1.default.sign({
-                id: userExists === null || userExists === void 0 ? void 0 : userExists._id
-            }, config_1.JWT_PASSWORD);
-            // add cookie logic
-            res.json({
-                token
-            });
-        }
-        else {
+        if (!passwordMatch) {
             res.status(403).json({
-                message: "Incorrect Cread"
+                message: "Incorrect Credentials"
             });
         }
+        const token = jsonwebtoken_1.default.sign({
+            id: userExists === null || userExists === void 0 ? void 0 : userExists._id
+        }, config_1.JWT_PASSWORD);
+        res.json({
+            token
+        });
     }
     catch (error) {
         console.error("Signin error:", error);
@@ -230,36 +222,22 @@ app.delete("/api/v1/content/:id", authMiddleware_1.userMiddleware, (req, res) =>
 app.post("/api/v1/brain/share", authMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const share = req.body.share;
+        //@ts-ignore
+        const userId = req.userId;
         if (share) {
-            const existingLink = yield db_1.LinkModel.findOne({
-                //@ts-ignore
-                userId: req.userId
-            });
+            const existingLink = yield db_1.LinkModel.findOneAndUpdate({ userId }, {}, { new: true });
             if (existingLink) {
-                res.json({
-                    hash: existingLink.hash
-                });
+                res.json({ hash: existingLink.hash });
             }
-            else if (!existingLink) {
+            else {
                 const hash = (0, RandomGen_1.random)(10);
-                yield db_1.LinkModel.create({
-                    //@ts-ignore
-                    userId: req.userId,
-                    hash: hash
-                });
+                const newLink = yield db_1.LinkModel.create({ userId, hash });
+                res.json({ hash: newLink.hash });
             }
-            // res.json({
-            //     hash
-            // })
         }
         else {
-            yield db_1.LinkModel.deleteOne({
-                //@ts-ignore                      
-                userId: req.userId
-            });
-            res.json({
-                messsage: "Link Removed"
-            });
+            yield db_1.LinkModel.findOneAndDelete({ userId });
+            res.json({ messsage: "Link Removed" });
         }
     }
     catch (error) {

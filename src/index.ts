@@ -14,18 +14,17 @@ import { hash } from "crypto";
 import { link } from "fs";
 import cors from 'cors'
 import { error, log } from "console";
-
-
-
 const app = express();
-app.use(express.json());
+
 app.use(
     cors({
-        origin: 'https://2nd-brain-vault.vercel.app', 
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true, 
+        // origin: 'https://2nd-brain-vault.vercel.app', 
+        // methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        // credentials: true, 
     })
   );
+
+app.use(express.json());  
 
 app.post("/api/v1/", async ( req: Request, res: Response) => { 
     console.log(`Server is running on port ${process.env.PORT}`);
@@ -88,54 +87,45 @@ app.post("/api/v1/signup", async ( req: Request, res: Response) => {
 app.post("/api/v1/signin", async ( req: Request, res: Response) => {
     
     try{
-    const requiredBody = z.object({
-        username: z.string()
-        .min(3, { message: "Username must be at least 3 characters long" })
-        .max(30, { message: "Username must not exceed 30 characters" }),
+        const { username, password} = req.body;
+    const validationResult = z.object({
+        username: z.string().min(3).max(30),
         password: z.string()
-            .regex(/[A-Z]/, { message: "Password must be contain at least one Capital letter" })
-            .regex(/[a-z]/, { message: "Password must be contain at least one small letter" })
-            .regex(/[0-9]/, { message: "Password must be contain at least one number" })
-            .regex(/[@#$%^&*(){}<>?:"]/, { message: "Password must be contain at least one special character" })
+            .regex(/[A-Z]/)
+            .regex(/[a-z]/)
+            .regex(/[0-9]/)
+            .regex(/[@#$%^&*(){}<>?:"]/),
     })
 
-    const passDataWithSuccess = requiredBody.safeParse(req.body);
+    .safeParse(req.body);
 
-    if (!passDataWithSuccess.success) {
-        res.json({
+    if (!validationResult.success) {
+        res.status(400).json({
             message: "incorect format",
-            error: passDataWithSuccess.error
+            error: validationResult.error
         })
-        return
     }
 
-    const { password, username} = req.body;
-
-    const userExists = await UserModel.findOne({
-        username: username
-    })
-
+    const userExists = await UserModel.findOne({ username: username }).select('password');
     if (!userExists) {
         res.status(403).json({ message: "Incorrect credentials" });
         return;
     }
     const passwordMatch = await bcrypt.compare(password, userExists?.password as string)
-
-    if (passwordMatch) {
-        const token = jwt.sign({
-            id: userExists?._id
-        }, JWT_PASSWORD as string);
-
-        // add cookie logic
-
-        res.json({
-            token
-        })
-    } else {
+    if (!passwordMatch){
         res.status(403).json({
-            message: "Incorrect Cread"
+            message: "Incorrect Credentials"
         })
     }
+
+    const token = jwt.sign({
+        id: userExists?._id
+    }, JWT_PASSWORD as string);
+
+    res.json({
+        token
+    })
+    
   } catch (error) {
     console.error("Signin error:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -258,44 +248,30 @@ app.post("/api/v1/brain/share", userMiddleware,async ( req: Request, res: Respon
      
     try {
     const share = req.body.share;
+    //@ts-ignore
+    const userId= req.userId;
         if(share){
 
-           const existingLink = await LinkModel.findOne({
-                //@ts-ignore
-                    userId: req.userId
-           }) ;
+           const existingLink = await LinkModel.findOneAndUpdate(
+                {userId},
+                {},
+                {new: true}
+            );
+
            if(existingLink){
-                
-                res.json({
-                hash: existingLink.hash
-                })
-                ;
+           res.json({ hash: existingLink.hash });
            } 
-           else if(!existingLink){
-            const hash = random(10);
-           await LinkModel.create({
-                 //@ts-ignore
-                userId: req.userId,
-                hash: hash
-            
-            });
+           else{
+           const hash = random(10);
+           const newLink = await LinkModel.create({ userId, hash});
+           res.json({ hash : newLink.hash })
            }
-                // res.json({
-                //     hash
-                // })
+                
 
         }else{
-            await LinkModel.deleteOne({ 
-                 //@ts-ignore                      
-                userId: req.userId
-            });
-
-            res.json({
-                messsage: "Link Removed"
-            })
+            await LinkModel.findOneAndDelete({userId});
+            res.json({ messsage: "Link Removed"});
         }
-
-        
 
     } catch (error) {
         console.error("Sharing error:", error);
