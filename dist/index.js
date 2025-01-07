@@ -25,9 +25,9 @@ const RandomGen_1 = require("./models/RandomGen");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-// origin: 'https://2nd-brain-vault.vercel.app', 
-// methods: ['GET', 'POST', 'PUT', 'DELETE'],
-// credentials: true, 
+    origin: 'https://2nd-brain-vault.vercel.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
 }));
 app.use(express_1.default.json());
 app.post("/api/v1/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
