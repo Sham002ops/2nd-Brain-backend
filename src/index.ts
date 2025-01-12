@@ -18,9 +18,9 @@ const app = express();
 
 app.use(
     cors({
-        origin: 'https://2nd-brain-vault.vercel.app', 
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true, 
+        // origin: 'https://2nd-brain-vault.vercel.app', 
+        // methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        // credentials: true, 
     })
   );
 
@@ -464,7 +464,35 @@ app.get("/api/v1/brain/:shareLink",  async ( req: Request, res: Response): Promi
         });
      }
     } catch (error) {
-        console.error("facebook error:", error);
+        console.error("pinterest error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+
+
+ });
+ app.get("/api/v1/content/type/doc", userMiddleware, async ( req: Request, res: Response) => {
+    try { 
+    //@ts-ignore
+    const userId = req.userId;
+    //  const type = req.params.type;
+     
+     try {
+        const filteredContent = await ContentModel.find({
+            userId: userId,
+            type: 'doc'
+        });
+
+        res.json({
+            content: filteredContent
+        });
+     } catch(error){
+        res.status(500).json({
+            message: "Error fetching content"
+            
+        });
+     }
+    } catch (error) {
+        console.error("document error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 

@@ -25,9 +25,9 @@ const RandomGen_1 = require("./models/RandomGen");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: 'https://2nd-brain-vault.vercel.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
+// origin: 'https://2nd-brain-vault.vercel.app', 
+// methods: ['GET', 'POST', 'PUT', 'DELETE'],
+// credentials: true, 
 }));
 app.use(express_1.default.json());
 app.post("/api/v1/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -400,7 +400,32 @@ app.get("/api/v1/content/type/pinterest", authMiddleware_1.userMiddleware, (req,
         }
     }
     catch (error) {
-        console.error("facebook error:", error);
+        console.error("pinterest error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}));
+app.get("/api/v1/content/type/doc", authMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        //@ts-ignore
+        const userId = req.userId;
+        //  const type = req.params.type;
+        try {
+            const filteredContent = yield db_1.ContentModel.find({
+                userId: userId,
+                type: 'doc'
+            });
+            res.json({
+                content: filteredContent
+            });
+        }
+        catch (error) {
+            res.status(500).json({
+                message: "Error fetching content"
+            });
+        }
+    }
+    catch (error) {
+        console.error("document error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }));
