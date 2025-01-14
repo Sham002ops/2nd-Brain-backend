@@ -21,6 +21,7 @@ app.use(
         origin: 'https://2nd-brain-vault.vercel.app', 
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true, 
+        optionsSuccessStatus: 200
     })
   );
 
