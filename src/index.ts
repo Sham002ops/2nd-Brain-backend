@@ -17,12 +17,7 @@ import { error, log } from "console";
 const app = express();
 
 app.use(
-    cors({
-        origin: *, 
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true, 
-        optionsSuccessStatus: 200
-    })
+    cors( )
   );
 
 app.use(express.json());  
