@@ -16,13 +16,11 @@ import cors from 'cors'
 import { error, log } from "console";
 const app = express();
 
-app.use({
-    origin: "https://2nd-brain-vault.vercel.app", 
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        credentials: true, 
-        optionsSuccessStatus: 200
-});
-
+app.use(cors({
+  origin: "https://2nd-brain-vault.vercel.app", // frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());  
 
 app.post("/api/v1/", async ( req: Request, res: Response) => { 
