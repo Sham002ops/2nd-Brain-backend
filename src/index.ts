@@ -18,7 +18,7 @@ const app = express();
 
 app.use(
     cors({
-        origin: 'https://2nd-brain-vault.vercel.app', 
+        origin: *, 
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true, 
         optionsSuccessStatus: 200
