@@ -16,9 +16,12 @@ import cors from 'cors'
 import { error, log } from "console";
 const app = express();
 
-app.use(
-    cors( )
-  );
+app.use({
+    origin: "https://2nd-brain-vault.vercel.app", 
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true, 
+        optionsSuccessStatus: 200
+});
 
 app.use(express.json());  
 
